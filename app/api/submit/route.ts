@@ -5,8 +5,12 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   try {
-    // ดึงค่า JSON จาก `.env.local`
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS || "{}");
+    // ดึงค่า GOOGLE_CREDENTIALS จาก Environment Variables
+    if (!process.env.GOOGLE_CREDENTIALS) {
+      throw new Error("GOOGLE_CREDENTIALS is missing from environment variables");
+    }
+
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 
     const auth = new google.auth.GoogleAuth({
       credentials,
