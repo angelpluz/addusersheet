@@ -1,101 +1,142 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [formData, setFormData] = useState({
+    CustID: "CU231300060", // Fix ค่า
+    CustGroupCode: "Dealer",
+    Custtype: "cust",
+    CompBoardName: "", // ชื่อประธานบริษัท
+    CompBoardID: "", // เลขผู้จดทะเบียนบริษัท
+    CustIDNumber: "",
+    CustTitle: "",
+    CustFName: "",
+    CustLName: "",
+    Addr: "",
+    Tumbon: "",
+    Amhur: "",
+    Changwat: "",
+    ZipCode: "",
+    CustPhone: "",
+    CustBirthDate: "",
+    InputUser: "admin",
+    TaxBranchID: "",
+    CustMobile: "",
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [sqlOutput, setSqlOutput] = useState("");
+  const [status, setStatus] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ฟังก์ชันแปลงวันที่ (ป้องกันค่าผิดพลาด)
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString === "") return "NULL";
+    const [year, month, day] = dateString.split("-");
+    return `'${year}-${month}-${day}'`; // ค.ศ. YYYY-MM-DD
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("กำลังบันทึกข้อมูล...");
+
+    try {
+      const response = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setStatus("บันทึกข้อมูลสำเร็จ ✅");
+
+        // SQL Statement
+        const sql = `INSERT INTO tbCustomer (
+  CustID, CustGroupCode, Custtype, CompBoardName, CompBoardID, CustIDNumber,
+  CustTitle, CustFName, CustLName, Addr, Tumbon, Amhur, Changwat, ZipCode,
+  CustPhone, CustBirthDate, InputUser, InputDate, LastDate, LastUser,
+  TaxBranchID, CustCode, CustCancelDate, CustEmail, CustRemark, CustMobile, Custoffice
+) VALUES (
+  '${formData.CustID}', '${formData.CustGroupCode}', '${formData.Custtype}',
+  '${formData.CompBoardName.trim()}', '${formData.CompBoardID.trim()}', '${formData.CustIDNumber.trim()}',
+  '${formData.CustTitle || "NULL"}', '${formData.CustFName.trim()}', '${formData.CustLName || "NULL"}',
+  '${formData.Addr.replace(/"/g, "").trim()}', '${formData.Tumbon.trim()}', '${formData.Amhur.trim()}', '${formData.Changwat.trim()}', '${formData.ZipCode.trim()}',
+  '${formData.CustPhone.trim()}', ${formatDate(formData.CustBirthDate)}, '${formData.InputUser}',
+  NULL, NULL, NULL, '${formData.TaxBranchID.trim()}',
+  NULL, NULL, NULL, NULL, '${formData.CustMobile.trim()}', NULL
+);`;
+        setSqlOutput(sql);
+      } else {
+        setStatus("เกิดข้อผิดพลาด ❌");
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      setStatus("เกิดข้อผิดพลาด ❌");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <div className="w-full max-w-lg bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-2xl font-semibold text-center text-gray-700 mb-6">แบบฟอร์มลงทะเบียน</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* รหัสลูกค้า (Fix ค่า) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">รหัสลูกค้า</label>
+            <input type="text" value="CU231300060" readOnly className="mt-1 p-2 w-full bg-gray-200 border rounded-md" />
+          </div>
+
+          {/* ส่วนข้อมูลทั้งหมด */}
+          {[
+            { name: "CompBoardName", label: "ชื่อประธานบริษัท" },
+            { name: "CompBoardID", label: "เลขผู้จดทะเบียนบริษัท" },
+            { name: "CustIDNumber", label: "รหัสบัตรประชาชน" },
+            { name: "CustTitle", label: "คำนำหน้า" },
+            { name: "CustFName", label: "ชื่อ" },
+            { name: "CustLName", label: "นามสกุล" },
+            { name: "Addr", label: "ที่อยู่" },
+            { name: "Tumbon", label: "ตำบล" },
+            { name: "Amhur", label: "อำเภอ" },
+            { name: "Changwat", label: "จังหวัด" },
+            { name: "ZipCode", label: "รหัสไปรษณีย์" },
+            { name: "CustPhone", label: "เบอร์โทรศัพท์" },
+            { name: "TaxBranchID", label: "รหัสสาขาภาษี" },
+            { name: "CustMobile", label: "เบอร์มือถือ" },
+          ].map(({ name, label }) => (
+            <div key={name}>
+              <label className="block text-sm font-medium text-gray-700">{label}</label>
+              <input type="text" name={name} value={formData[name as keyof typeof formData]} onChange={handleChange} required className="mt-1 p-2 w-full border rounded-md focus:ring-2 focus:ring-blue-500" />
+            </div>
+          ))}
+
+          {/* วันเกิด */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">วันเกิด</label>
+            <input type="date" name="CustBirthDate" value={formData.CustBirthDate} onChange={handleChange} required className="mt-1 p-2 w-full border rounded-md focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* ปุ่มส่งข้อมูล */}
+          <div className="flex justify-center">
+            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">ส่งข้อมูล</button>
+          </div>
+        </form>
+
+        {/* แสดง SQL Statement */}
+        {sqlOutput && (
+          <div className="mt-4 p-4 bg-gray-200 rounded-md">
+            <h3 className="font-semibold text-gray-700">SQL Statement</h3>
+            <textarea readOnly value={sqlOutput} rows={6} className="w-full p-2 mt-2 border rounded-md" />
+            <button onClick={() => navigator.clipboard.writeText(sqlOutput)} className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition">Copy SQL</button>
+          </div>
+        )}
+
+        {/* แสดงสถานะ */}
+        {status && <p className="mt-4 text-center text-gray-600">{status}</p>}
+      </div>
     </div>
   );
 }
